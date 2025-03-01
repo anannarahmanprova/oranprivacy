@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ric-tee-app
+  namespace: riab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ric-tee-app
+  template:
+    metadata:
+      labels:
+        app: ric-tee-app
+    spec:
+      containers:
+      - name: ric-tee-app
+        image: registry:5001/myapp:latest
+        imagePullPolicy: Always
+        # Define container port if your app listens on one (optional)
+        ports:
+        - containerPort: 8080

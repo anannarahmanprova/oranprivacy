@@ -1,0 +1,10 @@
+/* Enclave.edl */
+enclave {
+    trusted {
+        public void ecall_process_command([in, string] const char *command);
+    };
+
+    untrusted {
+        void ocall_send_response([in, string] const char *response);
+    };
+};
