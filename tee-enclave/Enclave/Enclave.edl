@@ -1,13 +1,10 @@
 enclave {
-    from "Sealing/Sealing.edl" import *;
-
     trusted {
-        /* define ECALLs here. */
-        public int generate_random_number(void);
+        public void store_key([in, size=len] uint8_t* key, size_t len);
     };
 
     untrusted {
-        /* define OCALLs here. */
-        void ocall_print([in, string]const char* str);
+        void ocall_print([in, string] const char* str);
     };
 };
+

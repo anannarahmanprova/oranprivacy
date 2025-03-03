@@ -41,6 +41,9 @@ RUN echo '. /opt/intel/sgxsdk/sgxsdk/environment' >> ~/.bashrc && \
 
 # Copy the application
 COPY . /app
+COPY client.crt /app/client.crt
+COPY client.key /app/client.key
+
 
 ENV LD_LIBRARY_PATH=/opt/intel/sgxsdk/lib64:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
 

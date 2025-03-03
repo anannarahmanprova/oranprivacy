@@ -6,7 +6,6 @@
 #include <stddef.h>
 #include "sgx_edger8r.h" /* for sgx_ocall etc. */
 
-#include "sgx_tseal.h"
 
 #include <stdlib.h> /* for size_t */
 
@@ -16,9 +15,7 @@
 extern "C" {
 #endif
 
-int generate_random_number(void);
-sgx_status_t seal(uint8_t* plaintext, size_t plaintext_len, sgx_sealed_data_t* sealed_data, size_t sealed_size);
-sgx_status_t unseal(sgx_sealed_data_t* sealed_data, size_t sealed_size, uint8_t* plaintext, uint32_t plaintext_len);
+void store_key(uint8_t* key, size_t len);
 
 sgx_status_t SGX_CDECL ocall_print(const char* str);
 
