@@ -1,0 +1,9 @@
+enclave {
+    trusted {
+        public void process_kpi([in, size=len] uint8_t* data, size_t len);
+    };
+    untrusted {
+        void ocall_print([in, string] const char* str);
+    };
+};
+

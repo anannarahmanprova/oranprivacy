@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sgx-app
+  namespace: riab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sgx-app
+  template:
+    metadata:
+      labels:
+        app: sgx-app
+    spec:
+      containers:
+      - name: sgx-app
+        image: localhost:5001/my-sgx-app:latest  
+        imagePullPolicy: Always  
+        securityContext:
+          privileged: true  # Required for SGX
+        ports:
+        - containerPort: 8080
