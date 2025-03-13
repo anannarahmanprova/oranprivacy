@@ -141,6 +141,7 @@ require (
 	github.com/prometheus/common v0.26.0 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
+	github.com/roasbeef/go-go-gadget-paillier v0.0.0-20181009074315-14f1f86b6000 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20210614095031-55d5740dbbcc // indirect
 	github.com/russross/blackfriday v1.5.2 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
@@ -150,6 +151,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
+	github.com/tuneinsight/lattigo/v4 v4.1.1 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect

@@ -24,5 +24,6 @@ USER nobody
 COPY --from=build /go/src/github.com/onosproject/ran-simulator/build/_output/ransim /usr/local/bin/ransim
 COPY --from=build /go/src/github.com/onosproject/ran-simulator/pkg/servicemodel/kpm2/datasets /usr/local/datasets
 # COPY pkg/config/*.yaml /etc/onos/config/
+EXPOSE 5150
 
 ENTRYPOINT ["ransim"]

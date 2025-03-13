@@ -42,7 +42,10 @@ func (m *MeasurementRecordItemInteger) Build() *e2smkpmv2.MeasurementRecordItem 
 // MeasurementRecordItemReal measurement record item real
 type MeasurementRecordItemReal struct {
 	value float64
+
+	
 }
+
 
 // NewMeasurementRecordItemReal creates a new measurement record item real
 func NewMeasurementRecordItemReal(options ...func(integer *MeasurementRecordItemReal)) *MeasurementRecordItemReal {

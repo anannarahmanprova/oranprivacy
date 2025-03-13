@@ -26,5 +26,7 @@ USER nobody
 COPY --from=build /go/src/github.com/rimedo-labs/rimedo-ts/build/_output/rimedo-ts /usr/local/bin/rimedo-ts
 # COPY --from=build /go/src/github.com/rimedo-labs/rimedo-ts/schemas /data/schemas
 # COPY --from=build /go/src/github.com/rimedo-labs/rimedo-ts/policytypes /data/policytypes
+EXPOSE 19999
+EXPOSE 5150
 
 ENTRYPOINT ["rimedo-ts"]
