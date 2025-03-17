@@ -25,6 +25,13 @@ void process_kpi(uint8_t* data, size_t len) {
     snprintf(buffer, sizeof(buffer), "KPI Data Received: %.*s", (int)len, data);
 
     // Call untrusted function (OCALL) to print message
-    ocall_print(buffer);
+    
 }
+
+/*#include "Enclave_t.h"
+
+int generate_random_number() {
+    ocall_print("Processing random number generation...");
+    return 42;
+}*/
 

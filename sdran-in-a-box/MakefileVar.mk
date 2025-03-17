@@ -39,7 +39,7 @@ SDRANCHARTCID-V1.4.0			?= sd-ran-1.4.2
 #  Helm arguments
 DEFAULT_HELM_ARGS				:= --set import.ran-simulator.enabled=false --set import.onos-pci.enabled=false
 HELM_ARGS						?= $(DEFAULT_HELM_ARGS)
-HELM_ARGS_RANSIM				?= --set import.ran-simulator.enabled=false --set import.onos-pci.enabled=false --set import.onos-kpimon.enabled=false
+HELM_ARGS_RANSIM				?= --set import.ran-simulator.enabled=false --set import.onos-pci.enabled=false --set import.onos-kpimon.enabled=false  --set import.onos-e2t.enabled=false
 HELM_ARGS_OAI					?= --set import.onos-rsm.enabled=false
 HELM_ARGS_RIC					?= --set import.onos-pci.enabled=false --set import.onos-rsm.enabled=false
 HELM_ARGS_RIC_E2AP101			?= --set import.onos-pci.enabled=false --set import.onos-rsm.enabled=false

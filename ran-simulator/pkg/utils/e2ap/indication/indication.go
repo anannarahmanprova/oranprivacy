@@ -88,7 +88,8 @@ func (indication *Indication) Build() (e2Indication *e2appducontents.Ricindicati
 	ricIndication.SetRicRequestID(rrID).SetRanFunctionID(types.RanFunctionID(indication.ranFuncID)).
 		SetRicActionID(2).
 		SetRicIndicationSN(3).SetRicIndicationType(e2apies.RicindicationType_RICINDICATION_TYPE_REPORT).
-		SetRicIndicationHeader(indication.indicationHeader).SetRicIndicationMessage(indication.indicationMessage).
+		SetRicIndicationHeader(indication.indicationHeader).
+		SetRicIndicationMessage(indication.indicationMessage).
 		SetRicCallProcessID(indication.ricCallProcessID)
 
 	return ricIndication, nil

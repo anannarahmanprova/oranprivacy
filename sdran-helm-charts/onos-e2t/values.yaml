@@ -21,9 +21,9 @@ replicaCount: 1
 
 image:
   registry: ""
-  repository: onosproject/onos-e2t
-  tag: '{{ .Chart.AppVersion }}'
-  pullPolicy: IfNotPresent
+  repository: localhost:5001/onos-e2t
+  tag: latest
+  pullPolicy: Always
   pullSecrets: []
 
 imagePullSecrets: []

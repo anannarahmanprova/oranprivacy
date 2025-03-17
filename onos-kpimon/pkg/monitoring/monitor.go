@@ -1,10 +1,11 @@
+package monitoring
+
 /*
-#cgo CFLAGS: -I/go/src/github.com/onosproject/onos-kpimon/pkg/monitoring/App -I/opt/intel/sgxsdk/include
-#cgo LDFLAGS: -L/go/src/github.com/onosproject/onos-kpimon/pkg/monitoring/App -lbridge
+#cgo CFLAGS: -I/go/src/github.com/onosproject/onos-kpimon/pkg/monitoring/App  -I/opt/intel/sgxsdk/sgxsdk/include/tlibc -I/opt/intel/sgxsdk/sgxsdk/include/stlport 
+#cgo LDFLAGS: -L/go/src/github.com/onosproject/onos-kpimon/pkg/monitoring/App -L/go/src/github.com/onosproject/onos-kpimon/pkg/monitoring -lbridge -L/opt/intel/sgxsdk/sgxsdk/lib64 -lsgx_urts_sim -L/usr/lib -L/usr/local/lib
 #include "App/App.h"
 #include <stdlib.h>
 */
-package monitoring
 import "C"
 import (
 	"context"
@@ -21,13 +22,16 @@ import (
 	measurmentStore "github.com/onosproject/onos-kpimon/pkg/store/measurements"
 
 	e2smkpmv2 "github.com/onosproject/onos-e2-sm/servicemodels/e2sm_kpm_v2_go/v2/e2sm-kpm-v2-go"
+	e2smkpmv2sm "github.com/onosproject/onos-e2-sm/servicemodels/e2sm_kpm_v2_go/servicemodel"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/onosproject/onos-lib-go/pkg/logging"
 
 	"github.com/onosproject/onos-kpimon/pkg/broker"
+	"crypto/aes"
+	"crypto/cipher"
 	"fmt"
-	"unsafe"
+
 )
 
 var log = logging.GetLogger()
@@ -64,38 +68,68 @@ type Monitor struct {
 func GoPrint(str *C.char) {
 	fmt.Println("[OCALL] Message from Enclave:", C.GoString(str))
 }
+func decrypt(ciphertext []byte, key []byte) ([]byte, error) {
+    block, err := aes.NewCipher(key)
+    if err != nil {
+        return nil, err
+    }
+
+    aesGCM, err := cipher.NewGCM(block)
+    if err != nil {
+        return nil, err
+    }
+
+    nonceSize := aesGCM.NonceSize()
+    if len(ciphertext) < nonceSize {
+        return nil, err
+    }
+
+    nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+    plaintext, err := aesGCM.Open(nil, nonce, ciphertext, nil)
+    if err != nil {
+        return nil, err
+    }
+
+    return plaintext, nil
+}
 func (m *Monitor) processIndicationFormat1(ctx context.Context, indication e2api.Indication,
 	measurements []*topoapi.KPMMeasurement, nodeID topoapi.ID) error {
 	
 	
-	enclavePath := C.CString("enclave.signed.so")
-	defer C.free(unsafe.Pointer(enclavePath))
-
-	if C.initialize_enclave(enclavePath) < 0 {
+	
+	
+	if C.initialize() < 0 {
 		fmt.Println("Failed to initialize SGX enclave")
-		return
-	}
-	defer C.destroy_enclave()
-
-	// Send KPI Data to Enclave
-	kpiData := []byte("This is KPI Data")
-	dataPtr := (*C.uint8_t)(unsafe.Pointer(&kpiData[0]))
-	dataLen := C.size_t(len(kpiData))
-
-	if C.process_kpi_wrapper(dataPtr, dataLen) != 0 {
-		fmt.Println("Failed to process KPI data in enclave")
-		return
+		
 	}
 
-	fmt.Println("Successfully sent KPI data to Enclave")
+
 	
+	encryptionKey := []byte{
+	0xa9, 0xf4, 0xb6, 0xc7, 0xd1, 0xe2, 0xf3, 0xa4,
+	0xb5, 0xc6, 0xd7, 0xe8, 0xf9, 0xa0, 0xb1, 0xc2,
+	0xd3, 0xe4, 0xf5, 0xa6, 0xb7, 0xc8, 0xd9, 0xe0,
+	0xf1, 0xa2, 0xb3, 0xc4, 0xd5, 0xe6, 0xf7, 0xa8,
+}
+
+
+
+	log.Errorf("payload.....................................:", fmt.Sprintf("%x", indication.Payload))
+	decryptedPayload, e := decrypt(indication.Payload, encryptionKey)
+	if e != nil {
+					log.Warn("Decryption failed:", e)
+					
+				}
+	log.Errorf("Decrypted Data (Hex).....................................:", fmt.Sprintf("%x", decryptedPayload))
+
 	
+	var kpm2ServiceModel e2smkpmv2sm.Kpm2ServiceModel
+
+	indMessageProto, e1 := kpm2ServiceModel.IndicationMessageASN1toProto(decryptedPayload)
 	
-	
-	
-	
-	
-	
+	if e1 != nil {
+					log.Warn("asn1to p failed:", e1)
+					}
 	
 	
 	
@@ -106,12 +140,15 @@ func (m *Monitor) processIndicationFormat1(ctx context.Context, indication e2api
 		return err
 	}
 
-	indMessage := e2smkpmv2.E2SmKpmIndicationMessage{}
-	err = proto.Unmarshal(indication.Payload, &indMessage)
+	indMessage:= e2smkpmv2.E2SmKpmIndicationMessage{}
+	err = proto.Unmarshal(indMessageProto, &indMessage)
 	if err != nil {
 		log.Warn(err)
 		return err
 	}
+
+	
+	
 
 	indHdrFormat1 := indHeader.GetIndicationHeaderFormats().GetIndicationHeaderFormat1()
 	indMsgFormat1 := indMessage.GetIndicationMessageFormats().GetIndicationMessageFormat1()

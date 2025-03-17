@@ -62,7 +62,7 @@ import (
 	
 	"io"
 	"math/big"
-	"github.com/roasbeef/go-go-gadget-paillier"
+
 	"fmt"
 	"bytes"
 	"compress/gzip"
@@ -377,156 +377,71 @@ func (sm *Client) collect(ctx context.Context,
 	if err != nil {
 		log.Debugf("can't get ns data from file")
 	}
-	encryptionKey := []byte("1234567key13455!") 
-	
-	privateKey, err := paillier.GenerateKey(rand.Reader, 16)
-	publicKey := &privateKey.PublicKey
 
-	if err != nil {
-		fmt.Println("Key generation error:", err)
-
-	}
-	scale := big.NewInt(100) 
-	//scaleDown := big.NewInt(1 << 17)
 	for _, measInfo := range measInfoList.Value {
 		for _, measType := range measTypes {
 			if measType.measTypeName.String() == measInfo.MeasType.GetMeasName().Value {
 				switch measType.measTypeName {
 				case PrbUsedDL:
 					if len(nsData) != 0 {
-						
-						
 						log.Debugf("utilization : %v", nsData[4])
-				
-                       
 						utilization, err := strconv.ParseFloat(strings.TrimSpace(nsData[4]), 64)
-						scaledData := big.NewInt(int64(utilization * float64(scale.Int64())))
-						
-
-						//dataToEncrypt := float32ToBytes(float32(utilization))
-						//encryptedData, err := encrypt(dataToEncrypt, encryptionKey)
-						ciphertext, err := paillier.Encrypt(publicKey, scaledData.Bytes())
-
-    				
-    						cipherInt := new(big.Int).SetBytes(ciphertext)
-						
-						log.Errorf("%v", err)
-						log.Errorf("%v", cipherInt)
+						if err != nil {
+							log.Errorf("%v", err)
+						}
 						log.Debugf("utilization per slice for Cell %v set for value: %+v",
 							cellNCGI, utilization)
 						measRecordReal := measurments.NewMeasurementRecordItemInteger(
-							measurments.WithIntegerValue(scaledData.Int64()),
+							measurments.WithIntegerValue(float_encoder(float32(utilization))),
 						).Build()
 						measRecord.Value = append(measRecord.Value, measRecordReal)
 					}
 				case PdcpPduVolumeDL:
 					if len(nsData) != 0 {
 						log.Debugf("volume : %v", nsData[5])
-			
 						volume, err := strconv.ParseFloat(strings.TrimSpace(nsData[5]), 64)
-						//dataToEncrypt := float32ToBytes(float32(volume))
-						//encryptedData, err := encrypt(dataToEncrypt, encryptionKey)
 						if err != nil {
 							log.Errorf("%v", err)
 						}
-						scaledData := big.NewInt(int64(volume * float64(scale.Int64())))
-						//scaledDownData := new(big.Int).Div(scaledData, scaleDown)
-					
-
-						//dataToEncrypt := float32ToBytes(float32(utilization))
-						//encryptedData, err := encrypt(dataToEncrypt, encryptionKey)
-					
-
-						ciphertext, err := paillier.Encrypt(publicKey, scaledData.Bytes())
-						//compressedCiphertext := compress(ciphertext)
-
-    				
-    						cipherInt := new(big.Int).SetBytes(ciphertext)
-    						//cipherInt, iv, err := encryptAESInt(int64(volume), encryptionKey )
-							
-						//asn1Int := &asn1.Integer{Value: cipherInt.Bytes(),}
-												// Assuming you need to encode it to binary format
-						//asn1Data, err := asn1Int.Marshal()
-						if err != nil {
-							log.Errorf("ASN.1 Encoding Error: %v", err)
-						}
-																
-						
-						log.Errorf("%v--------------------------------------------------------------------------------------------------------------", err)
-						log.Errorf("%v------------66666666----------------------------------------------------------------------------------------", cipherInt)
-						
-						
-						
-						
-						
-						
 						log.Debugf("volume for Cell %v set for value: %+v",
 							cellNCGI, volume)
-							
-							
-							
-						//result:=encryptedData
-						//decryptedBytes, err := decrypt(result, encryptionKey)	
-							
-							
-							
-							
-							
-							
 						measRecordReal := measurments.NewMeasurementRecordItemInteger(
-							measurments.WithIntegerValue(cipherInt.Int64()),
+							measurments.WithIntegerValue(float_encoder(float32(volume))),
 						).Build()
 						measRecord.Value = append(measRecord.Value, measRecordReal)
 					}
 				case PdcpRatePerPRBDL:
 					if len(nsData) != 0 {
 						log.Debugf("pdcp_rate : %+v", nsData[3])
-					
 						pdcp_rate, err := strconv.ParseFloat(strings.TrimSpace(nsData[3]), 64)
-						dataToEncrypt := float32ToBytes(float32(pdcp_rate))
-						encryptedData, err := encrypt(dataToEncrypt, encryptionKey)
 						if err != nil {
 							log.Errorf("%v", err)
 						}
 						log.Debugf("pdcp rate for Cell %v set for value: %+v",
 							cellNCGI, pdcp_rate)
 						measRecordReal := measurments.NewMeasurementRecordItemInteger(
-							measurments.WithIntegerValue(float_encoder(bytesToFloat32(encryptedData))),
+							measurments.WithIntegerValue(float_encoder(float32(pdcp_rate))),
 						).Build()
 						measRecord.Value = append(measRecord.Value, measRecordReal)
 					}
 				case RRCConnMax:
 					log.Debugf("Max number of UEs for Cell %v set for RRC Con Max: %v",
 						cellNCGI, int64(sm.ServiceModel.UEs.MaxUEsPerCell(ctx, uint64(cellNCGI))))
-					dataToEncrypt := float32ToBytes(float32(sm.ServiceModel.UEs.MaxUEsPerCell(ctx, uint64(cellNCGI))))
-					encryptedData, err := encrypt(dataToEncrypt, encryptionKey)
-					if err != nil {
-							log.Errorf("%v", err)
-						}
-						
-						
-					measRecordInteger :=  measurments.NewMeasurementRecordItemInteger(
-							measurments.WithIntegerValue(float_encoder(bytesToFloat32(encryptedData))),
-						).Build()
+					measRecordInteger := measurments.NewMeasurementRecordItemInteger(
+						measurments.WithIntegerValue(int64(sm.ServiceModel.UEs.MaxUEsPerCell(ctx, uint64(cellNCGI))))).
+						Build()
 					measRecord.Value = append(measRecord.Value, measRecordInteger)
 				case RRCConnAvg:
 					log.Debugf("Avg number of UEs for Cell %v set for RRC Con Max: %v",
 						cellNCGI, int64(sm.ServiceModel.UEs.LenPerCell(ctx, uint64(cellNCGI))))
-					dataToEncrypt := float32ToBytes(float32(sm.ServiceModel.UEs.LenPerCell(ctx, uint64(cellNCGI))))
-					encryptedData, err := encrypt(dataToEncrypt, encryptionKey)
-					if err != nil {
-							log.Errorf("%v", err)
-						}
-						
-						
-					measRecordInteger :=  measurments.NewMeasurementRecordItemInteger(
-							measurments.WithIntegerValue(float_encoder(bytesToFloat32(encryptedData))),
-						).Build()
+					measRecordInteger := measurments.NewMeasurementRecordItemInteger(
+						measurments.WithIntegerValue(int64(sm.ServiceModel.UEs.LenPerCell(ctx, uint64(cellNCGI))))).
+						Build()
 					measRecord.Value = append(measRecord.Value, measRecordInteger)
 				default:
 					measRecordNoValue := measurments.NewMeasurementRecordItemNoValue()
 					measRecord.Value = append(measRecord.Value, measRecordNoValue)
-					
+
 				}
 
 			}
@@ -619,6 +534,13 @@ func (sm *Client) sendRicIndicationFormat1(ctx context.Context, ncgi ransimtypes
 	subscription *subutils.Subscription,
 	actionDefinitions []*e2smkpmv2.E2SmKpmActionDefinition,
 	interval int64) error {
+	encryptionKey := []byte{
+	0xa9, 0xf4, 0xb6, 0xc7, 0xd1, 0xe2, 0xf3, 0xa4,
+	0xb5, 0xc6, 0xd7, 0xe8, 0xf9, 0xa0, 0xb1, 0xc2,
+	0xd3, 0xe4, 0xf5, 0xa6, 0xb7, 0xc8, 0xd9, 0xe0,
+	0xf1, 0xa2, 0xb3, 0xc4, 0xd5, 0xe6, 0xf7, 0xa8,
+}
+
 	// Creates and sends indication message format 1
 	subID := subscriptions.NewID(subscription.GetRicInstanceID(), subscription.GetReqID(), subscription.GetRanFuncID())
 	sub, err := sm.ServiceModel.Subscriptions.Get(subID)
@@ -642,13 +564,32 @@ func (sm *Client) sendRicIndicationFormat1(ctx context.Context, ncgi ransimtypes
 				if err != nil {
 					return err
 				}
+				encryptedData, err := encrypt(indicationMessageBytes, encryptionKey)
+				if err != nil {
+					return err
+				}
+				
+				log.Errorf("Encrypted Data (Hex)........................................:", fmt.Sprintf("%x", indicationMessageBytes))
+
+
+				//log.Errorf("Encrypted Data (String)......................................:", string(encryptedData))
+
+				
+				//decryptedPayload, e := decrypt(encryptedData, encryptionKey)
+				
+					
+				
+				log.Errorf("Decrypted Data (Hex).....................................:", fmt.Sprintf("%x", encryptedData))
+
+// Log Decrypted Data as String (if it's text)
+				//log.Errorf("Decrypted Data (String)...................................:", string(decryptedPayload))
 
 				indication := e2apIndicationUtils.NewIndication(
 					e2apIndicationUtils.WithRicInstanceID(subscription.GetRicInstanceID()),
 					e2apIndicationUtils.WithRanFuncID(subscription.GetRanFuncID()),
 					e2apIndicationUtils.WithRequestID(subscription.GetReqID()),
 					e2apIndicationUtils.WithIndicationHeader(indicationHeaderBytes),
-					e2apIndicationUtils.WithIndicationMessage(indicationMessageBytes))
+					e2apIndicationUtils.WithIndicationMessage(encryptedData))
 
 				ricIndication, err := indication.Build()
 				if err != nil {

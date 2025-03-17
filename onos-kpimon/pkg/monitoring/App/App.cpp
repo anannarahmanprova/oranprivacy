@@ -162,27 +162,23 @@ int main() {
 
 
 sgx_enclave_id_t global_eid = 0;
+extern "C" {
 
-// OCALL implementation to call the Go function
-void ocall_print(const char* str) {
-    //GoPrint(str);  // This assumes GoPrint is defined in Go and properly linked
-}
 
 // Initialize the enclave
-int initialize_enclave(const char* enclave_path) {
-    sgx_launch_token_t token = {0};
-    int updated = 0;
-    return sgx_create_enclave(enclave_path, SGX_DEBUG_FLAG, &token, &updated, &global_eid, NULL);
+int initialize () {
+   if (initialize_enclave(&global_eid, "enclave.token", "enclave.signed.so") < 0) {
+       
+        return -1;
+    }
+  return 1;  
 }
 
-// Destroy the enclave
-int destroy_enclave() {
-    return sgx_destroy_enclave(global_eid);
-}
 
 // Wrapper function to process KPI via enclave
 int process_kpi_wrapper(uint8_t* data, size_t len) {
     sgx_status_t status = process_kpi(global_eid, data, len);
     return status;
+}
 }
 

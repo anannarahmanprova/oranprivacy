@@ -29,6 +29,7 @@ spec:
     {{- include "onos-kpimon.selectorLabels" . | nindent 8 }}
     spec:
       securityContext:
+      privileged: true
       {{- toYaml .Values.podSecurityContext | nindent 8 }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:

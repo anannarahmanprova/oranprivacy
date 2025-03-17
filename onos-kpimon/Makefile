@@ -17,8 +17,8 @@ XAPPNAME=onos-kpimon
 all: build docker-build
 
 build: # @HELP build the Go binaries and run all validations (default)
-build:
-	GOPRIVATE="github.com/onosproject/*" go build -o build/_output/onos-kpimon ./cmd/onos-kpimon
+build: 
+	 go build  -o build/_output/onos-kpimon ./cmd/onos-kpimon
 
 test: # @HELP run the unit tests and source code validation
 test: build lint license
@@ -31,7 +31,8 @@ docker-build-onos-kpimon: # @HELP build onos-kpimon Docker image
 		-t onosproject/onos-kpimon:${ONOS_KPIMON_VERSION}
 	@rm -rf vendor
 images: 
-	docker build -f build/onos-kpimon/Dockerfile -t localhost:5001/$(XAPPNAME):$(ONOS_KPIMON_VERSION) .
+	
+	docker build -f build/onos-kpimon/Dockerfile --no-cache --build-arg CFLAGS="-Wno-error" --build-arg CGO_CFLAGS="-Wno-error" -t localhost:5001/$(XAPPNAME):$(ONOS_KPIMON_VERSION) .
 	docker run -d --name $(XAPPNAME) localhost:5001/$(XAPPNAME):$(ONOS_KPIMON_VERSION)
 	docker stop $(XAPPNAME)
 	docker rm $(XAPPNAME)

@@ -2,7 +2,6 @@
 #define APP_H
 
 #include <stdio.h>
-#include <iostream>
 #include "sgx_urts.h"
 #include "Enclave_u.h"
 
@@ -13,8 +12,8 @@
 extern "C" {
 #endif
 
-int initialize_enclave(const char* enclave_path);
-int destroy_enclave();
+int initialize();
+
 int process_kpi_wrapper(uint8_t* data, size_t len);
 
 #ifdef __cplusplus

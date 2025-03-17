@@ -7,6 +7,7 @@
 #include <string.h>
 #include "sgx_edger8r.h" /* for sgx_status_t etc. */
 
+#include "sgx_tseal.h"
 
 #include <stdlib.h> /* for size_t */
 
@@ -16,12 +17,10 @@
 extern "C" {
 #endif
 
-#ifndef OCALL_PRINT_DEFINED__
-#define OCALL_PRINT_DEFINED__
-void SGX_UBRIDGE(SGX_NOCONVENTION, ocall_print, (const char* str));
-#endif
 
 sgx_status_t process_kpi(sgx_enclave_id_t eid, uint8_t* data, size_t len);
+sgx_status_t seal(sgx_enclave_id_t eid, sgx_status_t* retval, uint8_t* plaintext, size_t plaintext_len, sgx_sealed_data_t* sealed_data, size_t sealed_size);
+sgx_status_t unseal(sgx_enclave_id_t eid, sgx_status_t* retval, sgx_sealed_data_t* sealed_data, size_t sealed_size, uint8_t* plaintext, uint32_t plaintext_len);
 
 #ifdef __cplusplus
 }

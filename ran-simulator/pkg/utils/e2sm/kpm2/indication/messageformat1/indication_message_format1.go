@@ -8,6 +8,13 @@ import (
 	e2smkpmv2sm "github.com/onosproject/onos-e2-sm/servicemodels/e2sm_kpm_v2_go/servicemodel"
 	e2smkpmv2 "github.com/onosproject/onos-e2-sm/servicemodels/e2sm_kpm_v2_go/v2/e2sm-kpm-v2-go"
 	"google.golang.org/protobuf/proto"
+	"crypto/aes"
+	"crypto/cipher"
+
+	"crypto/rand"
+	
+	
+	"io"
 )
 
 // Message indication message format 1 fields for kpm v2 service model
@@ -85,9 +92,32 @@ func (message *Message) ToAsn1Bytes() ([]byte, error) {
 	return indicationMessageAsn1Bytes, nil
 
 }
+func encrypt(plaintext []byte, key []byte) ([]byte, error) {
+    block, err := aes.NewCipher(key)
+    if err != nil {
+        return nil, err
+    }
+
+    aesGCM, err := cipher.NewGCM(block)
+    if err != nil {
+        return nil, err
+    }
+
+    nonce := make([]byte, aesGCM.NonceSize())
+    if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+        return nil, err
+    }
+
+    ciphertext := aesGCM.Seal(nonce, nonce, plaintext, nil)
+    return ciphertext, nil
+}
+type EncryptedMessage struct {
+	Data []byte
+}
 
 // Build builds indication message format 1 for kpm service model
 func (message *Message) Build() (*e2smkpmv2.E2SmKpmIndicationMessage, error) {
+
 	e2SmKpmPdu := e2smkpmv2.E2SmKpmIndicationMessage{
 		IndicationMessageFormats: &e2smkpmv2.IndicationMessageFormats{
 			E2SmKpmIndicationMessage: &e2smkpmv2.IndicationMessageFormats_IndicationMessageFormat1{
@@ -102,16 +132,13 @@ func (message *Message) Build() (*e2smkpmv2.E2SmKpmIndicationMessage, error) {
 						Value: int64(message.granularity),
 					},
 					MeasInfoList: message.measInfoList,
-					MeasData:     message.measData,
+					MeasData: message.measData,
 				},
 			},
 		},
 	}
+	
 
-	// FIXME: Add back when ready
-	//if err := e2SmKpmPdu.Validate(); err != nil {
-	//	return nil, errors.New(errors.Invalid, err.Error())
-	//}
 
 	return &e2SmKpmPdu, nil
 }

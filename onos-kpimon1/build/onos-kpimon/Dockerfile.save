@@ -1,0 +1,142 @@
+ARG ONOS_BUILD_VERSION=undefined
+
+FROM onosproject/golang-build:v1.3.0 as build
+
+ENV GO111MODULE=on
+ARG ONOS_MAKE_TARGET=build
+
+# Install required dependencies
+RUN apt update && apt install -y \
+    build-essential \
+    gcc \
+    g++ \
+    libc6-dev \
+    zlib1g-dev \
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+    
+
+
+# Set Go and compiler environment variables
+ENV PATH=$PATH:/usr/local/go/bin
+ENV GOPATH=/go
+ENV PATH=$GOPATH/bin:$PATH
+ENV CC=/usr/bin/gcc
+ENV CXX=/usr/bin/g++
+
+
+# Set SGX SDK Path and Environment Variables
+ENV SGX_SDK=/opt/intel/sgxsdk/sgxsdk
+ENV SGX_MODE=SIM
+ENV SGX_ARCH=x64
+ENV C_INCLUDE_PATH=/opt/intel/sgxsdk/sgxsdk/include
+ENV CPLUS_INCLUDE_PATH=/opt/intel/sgxsdk/sgxsdk/include
+ENV LD_LIBRARY_PATH=/opt/intel/sgxsdk/sgxsdk/lib64:$LD_LIBRARY_PATH
+
+
+# Copy SGX SDK
+COPY sgxsdk /opt/intel/sgxsdk/sgxsdk
+
+
+# Set Bash as the default shell
+SHELL ["/bin/bash", "-c"]
+
+# Ensure SGX SDK is sourced correctly
+RUN echo '. /opt/intel/sgxsdk/sgxsdk/environment' >> ~/.bashrc && \
+    . ~/.bashrc
+
+
+# Verify SGX SDK installation
+RUN ls -l /opt/intel/sgxsdk/sgxsdk/include/sgx_edger8r.h
+RUN ls -l /opt/intel/sgxsdk/sgxsdk/bin/x64
+RUN . $SGX_SDK/environment && echo "SGX environment sourced"
+
+# Verify SGX SDK installation
+
+RUN ls -l /opt/intel/sgxsdk/sgxsdk/include/tlibc/mbusafecrt.h
+
+# Copy Source Files
+COPY Makefile go.mod go.sum /go/src/github.com/onosproject/onos-kpimon/
+COPY cmd/ /go/src/github.com/onosproject/onos-kpimon/cmd/
+COPY pkg/ /go/src/github.com/onosproject/onos-kpimon/pkg/
+COPY vendor/ /go/src/github.com/onosproject/onos-kpimon/vendor/
+COPY api/ /go/src/github.com/onosproject/onos-kpimon/api
+COPY build/ /go/src/github.com/onosproject/onos-kpimon/build/
+
+
+
+# Build C++ static library using Makefile
+WORKDIR /go/src/github.com/onosproject/onos-kpimon/pkg/monitoring
+RUN make clean && make && \
+    ls -la && \
+    nm App/libbridge.a && \
+    nm libbridge.so && \
+    ldconfig
+
+
+# Build Go project with CGO enabled
+WORKDIR /go/src/github.com/onosproject/onos-kpimon
+
+RUN echo "Searching for gcc_fatalf.c..." && \
+    FILE=$(find / -name "gcc_fatalf.c" 2>/dev/null) && \
+    if [ -n "$FILE" ]; then \
+        echo "File found at: $FILE" && \
+        echo "---- File Content ----" && \
+        cat "$FILE"; \
+    else \
+        echo "File not found."; \
+    fi
+RUN echo '#include <stdio.h>' | gcc -E - > /dev/null || echo "stdio.h not found"
+RUN printf '#include <stdio.h>\nint main() { fprintf(stderr, "Test\\n"); return 0; }\n' > test.c && \
+    gcc test.c -o test && ./test || echo "Manual C Build failed"
+
+
+ENV CGO_ENABLED=1
+ENV CFLAGS="-Wno-error"
+ENV CXXFLAGS="-Wno-error"
+ENV CGO_CFLAGS="-Wno-error -I/usr/include -I/usr/local/include -I/go/src/github.com/onosproject/onos-kpimon/pkg/monitoring/App -I${SGX_SDK}/include -I${SGX_SDK}/include/tlibc -I$(SGX_SDK)/include/libcxx"
+
+ENV CGO_LDFLAGS="-L/usr/lib -L/usr/local/lib -L/opt/intel/sgxsdk/lib64 \
+-lsgx_urts_sim -lsgx_uae_service_sim -lsgx_tservice_sim -lsgx_trts_sim -lsgx_tcrypto -lc -Wl,-z,muldefs"
+
+
+
+RUN echo "Starting build with debugging..." && \
+    echo "CGO_CFLAGS: $CGO_CFLAGS" && \
+    echo "CGO_LDFLAGS: $CGO_LDFLAGS" && \
+    echo "GOFLAGS: $GOFLAGS" && \
+    echo "SGX_SDK: $SGX_SDK" && \
+    echo "SGX Mode: $SGX_MODE" && \
+    echo "Current Directory: $(pwd)
+" && \
+    echo "Directory Structure:" && \
+    ls -la && \
+    echo "Checking GCC includes..." && \
+    echo '#include <stdio.h>' | gcc -E - > /dev/null || echo "stdio.h not found" && \
+    echo "Running 'make' with debugging enabled..." && \
+    CFLAGS+="-Wno-error" make --debug=v ${ONOS_MAKE_TARGET} || { echo "Make build failed"; exit 1; }
+
+# Final Minimal Image
+FROM frolvlad/alpine-glibc:alpine-3.12
+USER nobody
+
+# Copy compiled binaries and libraries
+COPY --from=build /go/src/github.com/onosproject/onos-kpimon/build/_output/onos-kpimon /usr/local/bin/onos-kpimon
+COPY --from=build /go/src/github.com/onosproject/onos-kpimon/pkg/monitoring/libbridge.so /usr/local/lib/libbridge.so
+COPY --from=build /go/src/github.com/onosproject/onos-kpimon/pkg/monitoring/App/libbridge.a /usr/local/lib/libbridge.a
+COPY --from=build /go/src/github.com/onosproject/onos-kpimon/pkg/monitoring/App/App.h /usr/local/include/App.h
+
+# Set environment variables for runtime
+ENV CGO_ENABLED=1
+ENV LD_LIBRARY_PATH=/usr/local/lib
+ENV CGO_LDFLAGS="-L/usr/local/lib -lbridge"
+
+# Expose ports
+EXPOSE 19999
+EXPOSE 5150
+
+# Entry point for the application
+ENTRYPOINT ["onos-kpimon"]
+

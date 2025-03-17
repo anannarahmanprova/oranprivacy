@@ -19,6 +19,8 @@ image:
   tag: latest
   pullPolicy: Always
   pullSecrets: []
+  securityContext:
+          privileged: true 
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: "onos-kpimon"
