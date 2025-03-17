@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: 2020 Open Networking Foundation <info@opennetworking.org>
+#
+# SPDX-License-Identifier: Apache-2.0
+build/_output/onos-e2t
+vendor/*
+**/_output
+*.DS_Store
+coverage.txt
+*.coverprofile
+.idea
+.vscode
+*.o
+*.a
+.project
+.cproject
+.eclipse
+.settings/
+*report*.xml
+*coverage*.xml
+*-output.out
+build/build-tools
+
+api/asn1/*
+build/_input
+venv
