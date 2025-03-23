@@ -22,11 +22,25 @@ else
 	SGX_ENCLAVE_SIGNER := $(SGX_SDK)/bin/x64/sgx_sign
 endif
 
-SGX_COMMON_CFLAGS += -O2 -fPIC
+ifeq ($(SGX_DEBUG), 1)
+ifeq ($(SGX_PRERELEASE), 1)
+$(error Cannot set SGX_DEBUG and SGX_PRERELEASE at the same time!!)
+endif
+endif
+
+ifeq ($(SGX_DEBUG), 1)
+		SGX_COMMON_CFLAGS += -O0 -g
+else
+		SGX_COMMON_CFLAGS += -O2
+endif
 
 ######## Shared and Static Library Settings ########
 
-Urts_Library_Name := sgx_urts_sim
+ifneq ($(SGX_MODE), HW)
+	Urts_Library_Name := sgx_urts_sim
+else
+	Urts_Library_Name := sgx_urts
+endif
 App_Cpp_Files := App/App.cpp App/sgx_utils/sgx_utils.cpp
 
 App_Include_Paths := -IApp -I$(SGX_SDK)/include

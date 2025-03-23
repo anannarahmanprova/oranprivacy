@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 int initialize();
-
+int test ();
 int process_kpi_wrapper(uint8_t* data, size_t len);
 
 #ifdef __cplusplus

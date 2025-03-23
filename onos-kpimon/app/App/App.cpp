@@ -162,7 +162,7 @@ int main() {
 
 
 sgx_enclave_id_t global_eid = 0;
-extern "C" {
+
 
 
 // Initialize the enclave
@@ -173,12 +173,14 @@ int initialize () {
     }
   return 1;  
 }
-
+int test (){
+ return 1;
+}
 
 // Wrapper function to process KPI via enclave
 int process_kpi_wrapper(uint8_t* data, size_t len) {
     sgx_status_t status = process_kpi(global_eid, data, len);
     return status;
 }
-}
+
 

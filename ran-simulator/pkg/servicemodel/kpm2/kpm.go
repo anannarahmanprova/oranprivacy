@@ -380,8 +380,11 @@ func (sm *Client) collect(ctx context.Context,
 
 	for _, measInfo := range measInfoList.Value {
 		for _, measType := range measTypes {
+				log.Errorf("hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii.......................................%v:", measInfo.MeasType.GetMeasName().Value )
 			if measType.measTypeName.String() == measInfo.MeasType.GetMeasName().Value {
+	
 				switch measType.measTypeName {
+				
 				case PrbUsedDL:
 					if len(nsData) != 0 {
 						log.Debugf("utilization : %v", nsData[4])

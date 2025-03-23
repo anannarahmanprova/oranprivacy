@@ -1,10 +1,10 @@
 package monitoring
 
 /*
-#cgo CFLAGS: -I/go/src/github.com/onosproject/onos-kpimon/pkg/monitoring/App  -I/opt/intel/sgxsdk/sgxsdk/include/tlibc -I/opt/intel/sgxsdk/sgxsdk/include/stlport 
-#cgo LDFLAGS: -L/go/src/github.com/onosproject/onos-kpimon/pkg/monitoring/App -L/go/src/github.com/onosproject/onos-kpimon/pkg/monitoring -lbridge -L/opt/intel/sgxsdk/sgxsdk/lib64 -lsgx_urts_sim -L/usr/lib -L/usr/local/lib
-#include "App/App.h"
+#cgo CFLAGS: -I/go/src/github.com/onosproject/onos-kpimon/app/App  -I/opt/intel/sgxsdk/sgxsdk/include/tlibc 
+#cgo LDFLAGS: -L/go/src/github.com/onosproject/onos-kpimon/app/App  -lbridge -L/opt/intel/sgxsdk/sgxsdk/lib64 -lsgx_urts_sim 
 #include <stdlib.h>
+extern int initialize();
 */
 import "C"
 import (
@@ -99,10 +99,10 @@ func (m *Monitor) processIndicationFormat1(ctx context.Context, indication e2api
 	
 	
 	if C.initialize() < 0 {
-		fmt.Println("Failed to initialize SGX enclave")
-		
+    	log.Errorf("Failed to initialize SGX enclave............................................................")
+} 	else {
+    	log.Errorf("Pass to initialize SGX enclave............................................................")
 	}
-
 
 	
 	encryptionKey := []byte{
