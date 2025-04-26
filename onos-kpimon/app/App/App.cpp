@@ -179,8 +179,11 @@ int test (){
 
 // Wrapper function to process KPI via enclave
 int process_kpi_wrapper(uint8_t* data, size_t len) {
-    sgx_status_t status = process_kpi(global_eid, data, len);
-    return status;
+    sgx_status_t retval;
+    sgx_status_t status = process_kpi(global_eid, &retval, data, len);
+    if (status != SGX_SUCCESS)
+        return status;
+    return retval;
 }
 
 

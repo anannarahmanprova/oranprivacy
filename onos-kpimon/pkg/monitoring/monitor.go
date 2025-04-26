@@ -4,7 +4,9 @@ package monitoring
 #cgo CFLAGS: -I/go/src/github.com/onosproject/onos-kpimon/app/App  -I/opt/intel/sgxsdk/sgxsdk/include/tlibc 
 #cgo LDFLAGS: -L/go/src/github.com/onosproject/onos-kpimon/app/App  -lbridge -L/opt/intel/sgxsdk/sgxsdk/lib64 -lsgx_urts_sim 
 #include <stdlib.h>
+#include <stdint.h>
 extern int initialize();
+extern int process_kpi_wrapper(uint8_t* data, size_t len);
 */
 import "C"
 import (
@@ -99,22 +101,33 @@ func (m *Monitor) processIndicationFormat1(ctx context.Context, indication e2api
 	
 	
 	if C.initialize() < 0 {
-    	log.Errorf("Failed to initialize SGX enclave............................................................")
-} 	else {
-    	log.Errorf("Pass to initialize SGX enclave............................................................")
+	log.Errorf("Failed to initialize SGX enclave............................................................")
+} else {
+	log.Errorf("Pass to initialize SGX enclave............................................................")
+	
+	cPayload := C.CBytes(indication.Payload)
+	defer C.free(cPayload)
+
+	ret := C.process_kpi_wrapper((*C.uchar)(cPayload), C.size_t(len(indication.Payload)))
+	if ret != 0 {
+		log.Errorf("SGX enclave rejected indication: 0x%x", ret)
+		fmt.Errorf("SGX processing failed")
 	}
+}
+
 
 	
 	encryptionKey := []byte{
-	0xa9, 0xf4, 0xb6, 0xc7, 0xd1, 0xe2, 0xf3, 0xa4,
-	0xb5, 0xc6, 0xd7, 0xe8, 0xf9, 0xa0, 0xb1, 0xc2,
-	0xd3, 0xe4, 0xf5, 0xa6, 0xb7, 0xc8, 0xd9, 0xe0,
-	0xf1, 0xa2, 0xb3, 0xc4, 0xd5, 0xe6, 0xf7, 0xa8,
+	0xa9, 0xf4, 0xb6, 0xc7,
+	0xd1, 0xe2, 0xf3, 0xa4,
+	0xb5, 0xc6, 0xd7, 0xe8,
+	0xf9, 0xa0, 0xb1, 0xc2,
 }
 
 
 
 	log.Errorf("payload.....................................:", fmt.Sprintf("%x", indication.Payload))
+	log.Infof("Encrypted Payload length: %d", len(indication.Payload))
 	decryptedPayload, e := decrypt(indication.Payload, encryptionKey)
 	if e != nil {
 					log.Warn("Decryption failed:", e)

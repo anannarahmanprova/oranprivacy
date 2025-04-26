@@ -1,7 +1,7 @@
 enclave {
     from "Sealing/Sealing.edl" import *;
     trusted {
-        public void process_kpi([in, size=len] uint8_t* data, size_t len);
+        public sgx_status_t process_kpi([in, size=len] uint8_t* data, uint32_t len);
     };
-
 };
+
